@@ -5,20 +5,29 @@
 
 #version 0.1  04.08.10 -- initial version
 
-BLUE="[34;01m"
-CYAN="[36;01m"
-CYANN="[36m"
-GREEN="[32;01m"
-RED="[31;01m"
-PURP="[35;01m"
+FAT_GREEN="[32;01m"
+GREEN="[32m"
+FAT_RED="[31;01m"
+RED="[31m"
+MAG="[35m"
+FAT_BLACK="[1m"
 OFF="[0m"
+NL="
+"
 
 usage="Usage: ${0##*/} [OPTIONS] -- [ARGS]"
 quiet="no"
 diff="no"
 filter="no"
 diff_opts='--new-file --unified --show-c-function --recursive'
-wdiff_opts="--start-delete=$RED --end-delete=$OFF --start-insert=$GREEN --end-insert=$OFF"
+ab="no"
+
+color_filter() {
+  sed -e "s/\[-/$RED/g" \
+      -e "s/-\]/$OFF/g" \
+      -e "s/{+/$GREEN/g" \
+      -e "s/+}/$OFF/g" "$@"
+}
 
 die() {
   echo -e "$*"
@@ -41,6 +50,7 @@ OPTIONS:
                     ARGS will be given to diff (no ARGS = read from stdin)
     --diffopts XXX  Change opts of diff
                     Default: '$diff_opts'
+    --ab            replace trunc by a and b (only work with 2 dirs)
     --no-color      Disable-color
 -h, --help          Show this help
 -v, --version       Show version
@@ -53,6 +63,7 @@ Send bugs and comment to junghans@mpip-mainz.mpg.de
 eof
 }
 
+shopt -s extglob
 while [ "${1#-}" != "$1" ]; do
  if [ "${1#--}" = "$1" ] && [ -n "${1:2}" ]; then
     #short opt with arguments here: fc
@@ -63,9 +74,11 @@ while [ "${1#-}" != "$1" ]; do
     fi
  fi
  case $1 in 
+   --ab)
+    ab="yes"
+    shift;;
    --no-color)
-    unset BLUE CYAN CYANN GREEN RED PURP OFF
-    wdiff_opts=""
+    unset FAT_GREEN GREEN FAT_RED RED MAG OFF FAT_BLACK
     shift;;
    -f | --filter)
     filter="yes"
@@ -97,18 +110,38 @@ while [ "${1#-}" != "$1" ]; do
 done
 
 if [ "$filter" = "yes" ]; then
-  sed -e "s/\[-/$RED/g" \
-      -e "s/-\]/$OFF/g" \
-      -e "s/{+/$GREEN/g" \
-      -e "s/+}/$OFF/g" "$@"
+  color_filter "$@"
   exit $?
 fi
 
 if [ "$diff" = "yes" ]; then
-  diff $diff_opts $@ | wdiff $wdiff_opts --diff-input
-  exit $?
-else
-  [ -z "$1" ] && wdiff_opts="$wdiff_opts --diff-input"
-  wdiff $wdiff_opts $@
+  total_diff=$(mktemp)
+  t1=$(mktemp)
+  t2=$(mktemp)
+  diff $diff_opts $@ > $total_diff
+  [ $? -eq 2 ] && die
+  if [ "$ab" = "yes" ]; then
+    for ((i=1;i<=(${#1}<${#2}?${#1}:${#2});i++)); do
+      [ "${1:0-$i}" != "${2:0-$i}" ] && break
+    done
+    ((i--))
+    a="${1:0:${#1}-$i}"
+    b="${2:0:${#2}-$i}"
+  fi
+  IFS="$NL"
+  for i in $(<$total_diff); do
+    [ -z "${i##diff*}" ] && echo -e "$FAT_BLACK${i}$OFF" && continue
+    [ -z "${i##---*}" ] && [ "$ab" = "yes" ] && echo -e "$FAT_RED${i/$a/a}$OFF" && continue
+    [ -z "${i##---*}" ] && echo -e "$FAT_RED${i}$OFF" && continue
+    [ -z "${i##+++*}" ] && [ "$ab" = "yes" ] && echo -e "$FAT_GREEN${i/$b/b}$OFF" && continue
+    [ -z "${i##+++*}" ] && echo -e "$FAT_GREEN${i}$OFF" && continue
+    [ -z "${i##@@*}" ] && echo -e "$MAG$i$OFF" && continue
+    [ -z "${i##-*}" ] && echo ${i#-} >> $t1 && continue
+    [ -z "${i##+*}" ] && echo ${i#+} >> $t2 && continue
+    wdiff $t1 $t2 | color_filter && : > $t1 && : > $t2
+    echo "${i## }"
+  done
   exit $?
 fi
+
+wdiff $@ | color_filter
