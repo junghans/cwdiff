@@ -22,7 +22,7 @@ diff="no"
 filter="no"
 diff_opts='--new-file --unified --show-c-function --recursive'
 ab="no"
-out=""
+out="-"
 style="wdiff"
 a2ps_opts="--prologue=color"
 
@@ -31,6 +31,10 @@ color_filter() {
       -e "s/-\]/$OFF/g" \
       -e "s/{+/$GREEN/g" \
       -e "s/+}/$OFF/g" "$@"
+}
+
+output() {
+  [ "$1" = "-" ] && tee || tee > "$1"
 }
 
 die() {
@@ -48,10 +52,11 @@ This colorized the output of wdiff
 $usage
 ARGS will be given to wdiff
 OPTIONS:
--f, --filter        Just act as a filter (don't run wdiff internally)
+-f, --filter        Just act as a filter and don't run (w)diff internally
+                    (also works with -d or -D)
                     ARGS will be given to sed (no ARGS = read from stdin)
 -d, --diff          Preprocess input with diff (useful for dirs)
-                    ARGS will be given to diff
+                    ARGS will be given to diff first and then to wdiff
 -D, --diffonly      Just colorize the diff and do NOT run wdiff
                     (implies --diff, and work with --filter)
     --diffopts XXX  Change opts of diff
@@ -63,14 +68,19 @@ OPTIONS:
                     (also work with --filter)
     --a2psopts XXX  Change opts of a2ps
                     Default: '$a2ps_opts'
+-o, --out FILE      Change output file
+                    Default: stdout
 -h, --help          Show this help
 -v, --version       Show version
     --hg            Show last log message for hg (or cvs)
 
 Examples:  ${0##*/} -d dir1 dir2
+           ${0##*/} file1 file2
            ${0##*/} --ab -D dir1 dir2
 	   ${0##*/} -a --ab -D dir1 dir2 > file.ps
 	   wdiff file1 file2 | ${0##*/} -f
+	   diff file1 file2 | ${0##*/} -D -f
+
 
 Send bugs and comment to junghans@mpip-mainz.mpg.de
 eof
@@ -86,7 +96,7 @@ while [ "${1#-}" != "$1" ]; do
        set -- "${1:0:2}" "-${1:2}" "${@:2}"
     fi
  fi
- case $1 in 
+ case $1 in
    --ab)
     ab="yes"
     shift;;
@@ -107,8 +117,11 @@ while [ "${1#-}" != "$1" ]; do
   --a2psopts)
     a2ps_opts="$2"
     shift 2;;
+   -o | --out)
+    out="$2"
+    shift 2;;
    --diffopts)
-    diff_opts="$1"
+    diff_opts="$2"
     shift ;;
    -q | --quiet)
     quiet="yes"
@@ -134,9 +147,9 @@ if [ -n "$a2ps" ]; then
   unset FAT_GREEN GREEN FAT_RED RED MAG OFF FAT_BLACK
   #seem like a bug in the a2ps style file
   color_filter() { sed -e "s/\[-/[wd-/g" -e "s/-\]/-wd]/g" -e "s/{+/{wd+/g" -e "s/+}/+wd}/g" "$@"; }
-  a2ps=( a2ps $a2ps_opts --pretty-print=$style -o - )
+  a2ps=( a2ps $a2ps_opts --pretty-print=$style -o $out )
 else
-  a2ps=tee
+  a2ps=( output $out )
 fi
 
 if [ "$diff" != "no" ]; then
@@ -176,9 +189,9 @@ if [ "$diff" != "no" ]; then
       wdiff $t1 $t2 | color_filter; : > $t1; : > $t2
       echo "${i## }"
     fi
-  done | "${a2ps[@]}" 
+  done
 elif [ "$filter" = "yes" ]; then
-  color_filter "$@" | "${a2ps[@]}"
+  color_filter "$@"
 else
-  wdiff $@ | color_filter | "${a2ps[@]}"
-fi
+  wdiff $@ | color_filter
+fi | "${a2ps[@]}"
