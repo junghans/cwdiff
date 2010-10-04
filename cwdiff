@@ -182,7 +182,12 @@ if [ "$diff" != "no" ]; then
   fi
   IFS="$NL"
   for i in $(<$total_diff); do
-    [ -z "${i##diff*}" ] && echo -e "$FAT_BLACK${i}$OFF" && continue
+    if [ -z "${i##diff*}" ]; then
+      i="${i/ $diff_opts}"
+      i="${i/$a/a}"
+      echo -e "$FAT_BLACK${i/$b/b}$OFF"
+      continue
+    fi
     [ -z "${i##---*}" ] && echo -e "$FAT_RED${i/$a/a}$OFF" && continue
     [ -z "${i##+++*}" ] && echo -e "$FAT_GREEN${i/$b/b}$OFF" && continue
     [ -z "${i##@@*}" ] && echo -e "$MAG$i$OFF" && continue
