@@ -5,6 +5,7 @@
 
 #version 0.1    04.08.10 -- initial version
 #version 0.1.1, 05.08.10 -- added -D and -o
+#version 0.1.2, 04.10.10 -- make -D work again and better help
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
@@ -16,7 +17,7 @@ OFF="[0m"
 NL="
 "
 
-usage="Usage: ${0##*/} [OPTIONS] -- [ARGS]"
+usage="Usage: ${0##*/} [OPTIONS] FILE1 FILE2"
 quiet="no"
 diff="no"
 filter="no"
@@ -48,20 +49,22 @@ qecho() {
 
 show_help () {
   cat << eof
-This colorized the output of wdiff
+A colorized version of wdiff
 $usage
-ARGS will be given to wdiff
+ARGS will be given to wdiff, if not --diffonly or --filter option given
 OPTIONS:
--f, --filter        Just act as a filter and don't run (w)diff internally
-                    (also works with -d or -D)
-                    ARGS will be given to sed (no ARGS = read from stdin)
--d, --diff          Preprocess input with diff (useful for dirs)
-                    ARGS will be given to diff first and then to wdiff
--D, --diffonly      Just colorize the diff and do NOT run wdiff
-                    (implies --diff, and work with --filter)
+-f, --filter        Act as a color filter only and don't excute diff/wdiff
+                    internally, just colorize input (no ARGS = read from stdin)
+-d, --diff          Preprocess input with diff and before giving it to wdiff
+                    (very useful for dirs). Option can be used in combination
+                    with --filter option meaning input is a patch.
+-D, --diffonly      Process input with diff only and NOT with wdiff, so ${0##*/}
+                    basically acts like a colorized version of diff. Option
+                    can be used in combination with --filter option meaning
+                    input is a patch.
     --diffopts XXX  Change opts of diff
                     Default: '$diff_opts'
-    --ab            replace trunc by a and b (only work with 2 dirs)
+    --ab            replace trunc of dirname by 'a' and 'b'
     --no-color      Disable color
                     (implies --a2psopts '--prologue=ul')
 -a, --a2ps          Pipe the output to a2ps, which will produce ps code
@@ -70,6 +73,7 @@ OPTIONS:
                     Default: '$a2ps_opts'
 -o, --out FILE      Change output file
                     Default: stdout
+    --              Stop parsing options
 -h, --help          Show this help
 -v, --version       Show version
     --hg            Show last log message for hg (or cvs)
@@ -111,6 +115,9 @@ while [ "${1#-}" != "$1" ]; do
    -d | --diff)
     diff="yes"
     shift ;;
+   -D | --diffonly)
+    diff="only"
+    shift ;;
    -a | --a2ps)
     a2ps="a2ps"
     shift ;;
@@ -145,7 +152,7 @@ done
 
 if [ -n "$a2ps" ]; then
   unset FAT_GREEN GREEN FAT_RED RED MAG OFF FAT_BLACK
-  #seem like a bug in the a2ps style file
+  #seems like a bug in the a2ps style file
   color_filter() { sed -e "s/\[-/[wd-/g" -e "s/-\]/-wd]/g" -e "s/{+/{wd+/g" -e "s/+}/+wd}/g" "$@"; }
   a2ps=( a2ps $a2ps_opts --pretty-print=$style -o $out )
 else
