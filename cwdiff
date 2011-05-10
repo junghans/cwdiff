@@ -6,6 +6,7 @@
 #version 0.1    04.08.10 -- initial version
 #version 0.1.1, 05.08.10 -- added -D and -o
 #version 0.1.2, 04.10.10 -- make -D work again and better help
+#version 0.1.3, 10.05.11 -- added --text to diff_opts to allow diff of binary files (issue #3)
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
@@ -21,7 +22,7 @@ usage="Usage: ${0##*/} [OPTIONS] FILE1 FILE2"
 quiet="no"
 diff="no"
 filter="no"
-diff_opts='--new-file --unified --show-c-function --recursive'
+diff_opts='--new-file --unified --show-c-function --recursive --text'
 ab="no"
 out="-"
 style="wdiff"
