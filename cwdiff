@@ -111,7 +111,7 @@ eof
 
 shopt -s extglob
 while [[ ${1} = -?* ]]; do
-  if [[ ${1} = --*=* ]]; then # case --xx=yy
+  if [[ ${1} = --??*=* ]]; then # case --xx=yy
     set -- "${1%%=*}" "${1#*=}" "${@:2}" # --xx=yy to --xx yy
   elif [[ ${1} = -[^-]?* ]]; then # case -xy split
     if [[ ${1} = -[o]* ]]; then #short opts with arguments
@@ -147,6 +147,7 @@ while [[ ${1} = -?* ]]; do
     shift 2;;
    -o | --out)
     out="$2"
+    [[ -z $out ]] && die "Missing filename after --out option"
     shift 2;;
    --diffopts)
     diff_opts="$2"
