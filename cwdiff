@@ -1,19 +1,34 @@
 #! /bin/bash
 
-#(C) 2009 C. Junghans
-# junghans@mpip-mainz.mpg.de
-
+#(C) 2009-2012 C. Junghans
+# junghans@votca.org
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
 #version 0.1    04.08.10 -- initial version
 #version 0.1.1, 05.08.10 -- added -D and -o
 #version 0.1.2, 04.10.10 -- make -D work again and better help
 #version 0.1.3, 10.05.11 -- added --text to diff_opts to allow diff of binary files (issue #3)
 #version 0.1.4, 10.05.11 -- removed --text again and handle case of binary files
+#version 0.2.0, 15.04.12 -- clean up + bugfix thanks to Arne
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
 FAT_RED="[31;01m"
 RED="[31m"
-MAG="[35m"
+MAGENTA="[35m"
 FAT_BLACK="[1m"
 OFF="[0m"
 NL="
@@ -27,33 +42,35 @@ diff_opts='--new-file --unified --show-c-function --recursive'
 ab="no"
 out="-"
 style="wdiff"
+a2ps=""
 a2ps_opts="--prologue=color"
+color="yes"
 
 color_filter() {
-  sed -e "s/\[-/$RED/g" \
-      -e "s/-\]/$OFF/g" \
-      -e "s/{+/$GREEN/g" \
-      -e "s/+}/$OFF/g" "$@"
-}
-
-output() {
-  [ "$1" = "-" ] && tee || tee > "$1"
+  if [[ -n $a2ps ]]; then
+    #seems like a bug in the a2ps style file
+    sed -e "s/\[-/[wd-/g" -e "s/-\]/-wd]/g" -e "s/{+/{wd+/g" -e "s/+}/+wd}/g" $1
+  elif [[ $color = yes ]]; then
+    sed -e "s/\[-/$RED/g" -e "s/-\]/$OFF/g" -e "s/{+/$GREEN/g" -e "s/+}/$OFF/g" $1
+  else
+    cat $1
+  fi
 }
 
 die() {
-  echo -e "$*"
+  [[ -z $* ]] || echo -e "$*"
   exit 1
 }
 
 qecho() {
-  [ "$quiet" = "yes" ] || echo -e "$*"
+  [[ $quiet = yes ]] || echo -e "$*"
 }
 
 show_help () {
   cat << eof
 A colorized version of wdiff
 $usage
-ARGS will be given to wdiff, if not --diffonly or --filter option given
+
 OPTIONS:
 -f, --filter        Act as a color filter only and don't excute diff/wdiff
                     internally, just colorize input (no ARGS = read from stdin)
@@ -93,23 +110,24 @@ eof
 }
 
 shopt -s extglob
-while [ "${1#-}" != "$1" ]; do
- if [ "${1#--}" = "$1" ] && [ -n "${1:2}" ]; then
-    #short opt with arguments here: o
-    if [ "${1#-[o]}" != "${1}" ]; then
-       set -- "${1:0:2}" "${1:2}" "${@:2}"
-    else
-       set -- "${1:0:2}" "-${1:2}" "${@:2}"
+while [[ ${1} = -?* ]]; do
+  if [[ ${1} = --*=* ]]; then # case --xx=yy
+    set -- "${1%%=*}" "${1#*=}" "${@:2}" # --xx=yy to --xx yy
+  elif [[ ${1} = -[^-]?* ]]; then # case -xy split
+    if [[ ${1} = -[o]* ]]; then #short opts with arguments
+       set -- "${1:0:2}" "${1:2}" "${@:2}" # -xy to -x y
+    else #short opts without arguments
+       set -- "${1:0:2}" "-${1:2}" "${@:2}" # -xy to -x -y
     fi
- fi
- case $1 in
+  fi
+  case $1 in
    --ab)
     ab="yes"
     shift;;
    --no-color)
-    unset FAT_GREEN GREEN FAT_RED RED MAG OFF FAT_BLACK
-    color_filter() { sed -e 's/x/x/' "$@";}
+    unset FAT_GREEN GREEN FAT_RED RED MAGENTA OFF FAT_BLACK
     a2ps_opts="--prologue=ul"
+    color="no"
     shift;;
    -f | --filter)
     filter="yes"
@@ -122,6 +140,7 @@ while [ "${1#-}" != "$1" ]; do
     shift ;;
    -a | --a2ps)
     a2ps="a2ps"
+    unset FAT_GREEN GREEN FAT_RED RED MAGENTA OFF FAT_BLACK
     shift ;;
   --a2psopts)
     a2ps_opts="$2"
@@ -149,32 +168,34 @@ while [ "${1#-}" != "$1" ]; do
     break;;
   *)
    die "Unknown option '$1'";;
- esac
+  esac
 done
 
-if [ -n "$a2ps" ]; then
-  unset FAT_GREEN GREEN FAT_RED RED MAG OFF FAT_BLACK
-  #seems like a bug in the a2ps style file
-  color_filter() { sed -e "s/\[-/[wd-/g" -e "s/-\]/-wd]/g" -e "s/{+/{wd+/g" -e "s/+}/+wd}/g" "$@"; }
-  a2ps=( a2ps $a2ps_opts --pretty-print=$style -o $out )
+[[ $1 = - ]] && filter="yes" && shift
+if [[ $filter = no ]]; then
+  [[ -z $1 || -z $2 ]]  && die "Please specify two files or add --filter option"
+  [[ -f $1 ]] || die "Could not read file '$1'"
+  [[ -f $2 ]] || die "Could not read file '$2'"
+  [[ -n $3 ]] && die "I don't know what to do with arguments '${@:3}'"
 else
-  a2ps=( output $out )
+  [[ -n "$*" ]] && die "I don't know what to do with arguments '$*' together --filter option"
 fi
 
-if [ "$diff" != "no" ]; then
+if [[ $diff != no ]]; then
   total_diff=$(mktemp)
   t1=$(mktemp)
   t2=$(mktemp)
-  if [ "$filter" = "no" ]; then
-    diff $diff_opts "$@" > $total_diff
+  #echo Debug: ${total_diff} ${t1} ${t2}
+  if [[ $filter = no ]]; then
+    diff $diff_opts "$1" "$2" > $total_diff
     #don't die here, because diff of binary files give exit code = 2
   else
-    sed -e 's/x/x/' "$@" > $total_diff || die
+    cat > $total_diff || die
   fi
-  if [ "$ab" = "yes" ]; then
+  if [[ $ab = yes ]]; then
     #find the longest equal part in $1 and $2 from the end
     for ((i=1;i<=(${#1}<${#2}?${#1}:${#2});i++)); do
-      [ "${1:0-$i}" != "${2:0-$i}" ] && break
+      [[ ${1:0-$i} != ${2:0-$i} ]] && break
     done
     ((i--))
     a="${1:0:${#1}-$i}"
@@ -184,34 +205,48 @@ if [ "$diff" != "no" ]; then
   fi
   IFS="$NL"
   for i in $(<$total_diff); do
-    if [ -z "${i##Files * and * differ}" ]; then
+    if [[ $i = "Files "*" and "*" differ" ]]; then # binary case
       i="${i/$a/a}"
       i="${i/$b/b}"
       echo -e "$i"
-      continue
-    fi
-    if [ -z "${i##diff*}" ]; then
+    elif [[ $i = diff* ]]; then # diff header line
       i="${i/ $diff_opts}"
       i="${i/$a/a}"
       echo -e "$FAT_BLACK${i/$b/b}$OFF"
-      continue
-    fi
-    [ -z "${i##---*}" ] && echo -e "$FAT_RED${i/$a/a}$OFF" && continue
-    [ -z "${i##+++*}" ] && echo -e "$FAT_GREEN${i/$b/b}$OFF" && continue
-    [ -z "${i##@@*}" ] && echo -e "$MAG$i$OFF" && continue
-    if [ "$diff" = "only" ]; then
-      [ -z "${i##-*}" ] && echo "$RED${i}$OFF" && continue
-      [ -z "${i##+*}" ] && echo "$GREE${i}$OFF"&& continue
-      echo "${i}"
+    elif [[ $i = ---* ]]; then
+      echo -e "${FAT_RED}${i/$a/a}${OFF}"
+    elif [[ $i = +++* ]]; then
+      echo -e "${FAT_GREEN}${i/$b/b}${OFF}"
+    elif [[ $i = @@* ]]; then
+      echo -e "${MAGENTA}${i}${OFF}"
+    elif [[ $diff = only && $i = -* ]]; then
+      echo -e "${RED}${i}${OFF}"
+    elif [[ $diff = only && $i = +* ]]; then
+      echo -e "${GREEN}${i}${OFF}"
+    elif [[ $diff = only ]]; then
+      echo -e "${i}"
+    elif [[ $i = -* ]]; then
+      echo "${i#-}" >> $t1
+    elif [[ $i = +* ]]; then
+      echo "${i#+}" >> $t2
     else
-      [ -z "${i##-*}" ] && echo ${i#-} >> $t1 && continue
-      [ -z "${i##+*}" ] && echo ${i#+} >> $t2 && continue
-      wdiff $t1 $t2 | color_filter; : > $t1; : > $t2
-      echo "${i## }"
+      wdiff "$t1" "$t2" | color_filter
+      : > "$t1"
+      : > "$t2"
+      echo -e "${i## }"
     fi
   done
-elif [ "$filter" = "yes" ]; then
-  color_filter "$@"
+  # thanks to Arne Babenhauserheide for poiting out this case is missing
+  # if there was only one + or - line at the end
+  if [[ -n $(<$t1) || -n $(<$t2) ]]; then
+    wdiff "$t1" "$t2" | color_filter
+  fi
+elif [[ $filter = yes ]]; then
+  color_filter 
 else
-  wdiff $@ | color_filter
-fi | "${a2ps[@]}"
+  wdiff "$1" "$2" | color_filter
+fi | if [[ -n $a2ps ]]; then
+  a2ps $a2ps_opts "--pretty-print=$style" -o "$out"
+else
+  [[ $out = - ]] && cat || cat > "$out"
+fi
