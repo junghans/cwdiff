@@ -23,6 +23,7 @@
 #version 0.1.3, 10.05.11 -- added --text to diff_opts to allow diff of binary files (issue #3)
 #version 0.1.4, 10.05.11 -- removed --text again and handle case of binary files
 #version 0.2.0, 15.04.12 -- clean up + bugfix thanks to Arne
+#version 0.2.1, 15.04.12 -- clean up + new bug report address
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
@@ -105,7 +106,8 @@ Examples:  ${0##*/} -d dir1 dir2
 	   diff file1 file2 | ${0##*/} -D -f
 
 
-Send bugs and comment to junghans@mpip-mainz.mpg.de
+Report bugs and comments at https://code.google.com/p/cj-overlay/issues/list
+                         or junghans@votca.org
 eof
 }
 
@@ -220,28 +222,21 @@ if [[ $diff != no ]]; then
       echo -e "${FAT_GREEN}${i/$b/b}${OFF}"
     elif [[ $i = @@* ]]; then
       echo -e "${MAGENTA}${i}${OFF}"
-    elif [[ $diff = only && $i = -* ]]; then
-      echo -e "${RED}${i}${OFF}"
-    elif [[ $diff = only && $i = +* ]]; then
-      echo -e "${GREEN}${i}${OFF}"
-    elif [[ $diff = only ]]; then
-      echo -e "${i}"
     elif [[ $i = -* ]]; then
-      echo "${i#-}" >> $t1
+      [[ $diff = only ]] && echo -e "${RED}${i}${OFF}" || { echo "${i#-}" >> $t1; }
     elif [[ $i = +* ]]; then
-      echo "${i#+}" >> $t2
+      [[ $diff = only ]] && echo -e "${GREEN}${i}${OFF}" || { echo "${i#+}" >> $t2; }
     else
-      wdiff "$t1" "$t2" | color_filter
+      # only true for diff != only, echo $() appends newline if needed.
+      [[ -n $(<$t1) || -n $(<$t2) ]] && echo -e $(wdiff "$t1" "$t2" | color_filter)
       : > "$t1"
       : > "$t2"
-      echo -e "${i## }"
+      [[ $diff = only ]] && echo -e "${i}" || echo -e "${i## }"
     fi
   done
   # thanks to Arne Babenhauserheide for poiting out this case is missing
-  # if there was only one + or - line at the end
-  if [[ -n $(<$t1) || -n $(<$t2) ]]; then
-    wdiff "$t1" "$t2" | color_filter
-  fi
+  # if there was + or - lines at the end, which has been printed
+  [[ -n $(<$t1) || -n $(<$t2) ]] && echo -e $(wdiff "$t1" "$t2" | color_filter)
 elif [[ $filter = yes ]]; then
   color_filter 
 else
