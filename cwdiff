@@ -24,6 +24,7 @@
 #version 0.1.4, 10.05.11 -- removed --text again and handle case of binary files
 #version 0.2.0, 15.04.12 -- clean up + bugfix thanks to Arne
 #version 0.2.1, 15.04.12 -- clean up + new bug report address
+#version 0.2.2, 20.04.12 -- fixed a bug if argument were dirs
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
@@ -177,8 +178,8 @@ done
 [[ $1 = - ]] && filter="yes" && shift
 if [[ $filter = no ]]; then
   [[ -z $1 || -z $2 ]]  && die "Please specify two files or add --filter option"
-  [[ -f $1 ]] || die "Could not read file '$1'"
-  [[ -f $2 ]] || die "Could not read file '$2'"
+  [[ -e $1 ]] || die "Could not read file '$1'"
+  [[ -e $2 ]] || die "Could not read file '$2'"
   [[ -n $3 ]] && die "I don't know what to do with arguments '${@:3}'"
 else
   [[ -n "$*" ]] && die "I don't know what to do with arguments '$*' together --filter option"
