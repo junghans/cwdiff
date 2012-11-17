@@ -1,0 +1,7 @@
+#see http://mercurial.selenic.com/wiki/WordDiff
+#add this to your ~/.hgrc or /etc/mercurial/hgrc.d/cwdiff.rc
+[extensions]
+hgext.extdiff =
+[extdiff]
+cmd.wdiff = cwdiff
+opts.wdiff = --diff --ab
