@@ -178,8 +178,9 @@ done
 [[ $1 = - ]] && filter="yes" && shift
 if [[ $filter = no ]]; then
   [[ -z $1 || -z $2 ]]  && die "Please specify two files or add --filter option"
-  [[ -e $1 ]] || die "Could not read file '$1'"
-  [[ -e $2 ]] || die "Could not read file '$2'"
+  #use -e as it could be file or dir
+  [[ -e $1 ]] || die "Could not read file/dir '$1'"
+  [[ -e $2 ]] || die "Could not read file/dir '$2'"
   [[ -n $3 ]] && die "I don't know what to do with arguments '${@:3}'"
 else
   [[ -n "$*" ]] && die "I don't know what to do with arguments '$*' together --filter option"
@@ -196,7 +197,8 @@ if [[ $diff != no ]]; then
   else
     cat > $total_diff || die
   fi
-  if [[ $ab = yes ]]; then
+  # don't do this if we have not files ;-)
+  if [[ $ab = yes && -n $1 && -n $2 ]]; then
     #find the longest equal part in $1 and $2 from the end
     for ((i=1;i<=(${#1}<${#2}?${#1}:${#2});i++)); do
       [[ ${1:0-$i} != ${2:0-$i} ]] && break
@@ -228,16 +230,19 @@ if [[ $diff != no ]]; then
     elif [[ $i = +* ]]; then
       [[ $diff = only ]] && echo -e "${GREEN}${i}${OFF}" || { echo "${i#+}" >> $t2; }
     else
-      # only true for diff != only, echo $() appends newline if needed.
-      [[ -n $(<$t1) || -n $(<$t2) ]] && echo -e $(wdiff "$t1" "$t2" | color_filter)
+      # only true for diff != only
+      # wdiff will not append a newline if the 2nd file is empty hence the echo $()
+      # quotes around $() are need to allow nelines in wdiff output
+      [[ -n $(<$t1) || -n $(<$t2) ]] && echo -e "$(wdiff "$t1" "$t2" | color_filter)"
+      #wdiff "$t1" "$t2" | color_filter
       : > "$t1"
       : > "$t2"
       [[ $diff = only ]] && echo -e "${i}" || echo -e "${i## }"
     fi
   done
-  # thanks to Arne Babenhauserheide for poiting out this case is missing
-  # if there was + or - lines at the end, which has been printed
-  [[ -n $(<$t1) || -n $(<$t2) ]] && echo -e $(wdiff "$t1" "$t2" | color_filter)
+  # thanks to Arne Babenhauserheide for pointing out this case is missing
+  # if there was + or - lines at the end, which has not been printed yet
+  [[ -n $(<$t1) || -n $(<$t2) ]] && echo -e "$(wdiff "$t1" "$t2" | color_filter)"
 elif [[ $filter = yes ]]; then
   color_filter 
 else
