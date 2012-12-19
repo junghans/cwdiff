@@ -49,7 +49,7 @@ a2ps_opts="--prologue=color"
 color="yes"
 
 color_filter() {
-  if [[ -n $a2ps ]]; then
+  if [[ $a2ps ]]; then
     #seems like a bug in the a2ps style file
     sed -e "s/\[-/[wd-/g" -e "s/-\]/-wd]/g" -e "s/{+/{wd+/g" -e "s/+}/+wd}/g" $1
   elif [[ $color = yes ]]; then
@@ -60,12 +60,12 @@ color_filter() {
 }
 
 die() {
-  [[ -z $* ]] || echo -e "$*"
+  [[ $* ]] && echo "$*"
   exit 1
 }
 
 qecho() {
-  [[ $quiet = yes ]] || echo -e "$*"
+  [[ $quiet = yes ]] || echo "$*"
 }
 
 show_help () {
@@ -150,7 +150,7 @@ while [[ ${1} = -?* ]]; do
     shift 2;;
    -o | --out)
     out="$2"
-    [[ -z $out ]] && die "Missing filename after --out option"
+    [[ ! $out ]] && die "Missing filename after --out option"
     shift 2;;
    --diffopts)
     diff_opts="$2"
@@ -177,20 +177,18 @@ done
 
 [[ $1 = - ]] && filter="yes" && shift
 if [[ $filter = no ]]; then
-  [[ -z $1 || -z $2 ]]  && die "Please specify two files or add --filter option"
+  [[ ! $1 || ! $2 ]]  && die "Please specify two files or add --filter option"
   #use -e as it could be file or dir
   [[ -e $1 ]] || die "Could not read file/dir '$1'"
   [[ -e $2 ]] || die "Could not read file/dir '$2'"
-  [[ -n $3 ]] && die "I don't know what to do with arguments '${@:3}'"
+  [[ $3 ]] && die "I don't know what to do with arguments '${@:3}'"
 else
-  [[ -n "$*" ]] && die "I don't know what to do with arguments '$*' together --filter option"
+  [[ $* ]] && die "I don't know what to do with arguments '$*' together --filter option"
 fi
 
 if [[ $diff != no ]]; then
   total_diff=$(mktemp)
-  t1=$(mktemp)
-  t2=$(mktemp)
-  #echo Debug: ${total_diff} ${t1} ${t2}
+  #echo Debug: ${total_diff}
   if [[ $filter = no ]]; then
     diff $diff_opts "$1" "$2" > $total_diff
     #don't die here, because diff of binary files give exit code = 2
@@ -198,7 +196,7 @@ if [[ $diff != no ]]; then
     cat > $total_diff || die
   fi
   # don't do this if we have not files ;-)
-  if [[ $ab = yes && -n $1 && -n $2 ]]; then
+  if [[ $ab = yes && $1 && $2 ]]; then
     #find the longest equal part in $1 and $2 from the end
     for ((i=1;i<=(${#1}<${#2}?${#1}:${#2});i++)); do
       [[ ${1:0-$i} != ${2:0-$i} ]] && break
@@ -214,40 +212,40 @@ if [[ $diff != no ]]; then
     if [[ $i = "Files "*" and "*" differ" ]]; then # binary case
       i="${i/$a/a}"
       i="${i/$b/b}"
-      echo -e "$i"
+      echo "$i"
     elif [[ $i = diff* ]]; then # diff header line
       i="${i/ $diff_opts}"
       i="${i/$a/a}"
-      echo -e "$FAT_BLACK${i/$b/b}$OFF"
+      echo "$FAT_BLACK${i/$b/b}$OFF"
     elif [[ $i = ---* ]]; then
-      echo -e "${FAT_RED}${i/$a/a}${OFF}"
+      echo "${FAT_RED}${i/$a/a}${OFF}"
     elif [[ $i = +++* ]]; then
-      echo -e "${FAT_GREEN}${i/$b/b}${OFF}"
+      echo "${FAT_GREEN}${i/$b/b}${OFF}"
     elif [[ $i = @@* ]]; then
-      echo -e "${MAGENTA}${i}${OFF}"
+      echo "${MAGENTA}${i}${OFF}"
     elif [[ $i = -* ]]; then
-      [[ $diff = only ]] && echo -e "${RED}${i}${OFF}" || { echo "${i#-}" >> $t1; }
+      [[ $diff = only ]] && echo "${RED}${i}${OFF}" || t1+="${i#-}$NL"
     elif [[ $i = +* ]]; then
-      [[ $diff = only ]] && echo -e "${GREEN}${i}${OFF}" || { echo "${i#+}" >> $t2; }
+      [[ $diff = only ]] && echo "${GREEN}${i}${OFF}" || t2+="${i#+}$NL"
     else
       # only true for diff != only
-      # wdiff will not append a newline if the 2nd file is empty hence the echo $()
-      # quotes around $() are need to allow nelines in wdiff output
-      [[ -n $(<$t1) || -n $(<$t2) ]] && echo -e "$(wdiff "$t1" "$t2" | color_filter)"
-      #wdiff "$t1" "$t2" | color_filter
-      : > "$t1"
-      : > "$t2"
-      [[ $diff = only ]] && echo -e "${i}" || echo -e "${i## }"
+      # cut the last newline do avoid an empty line at the end (echo append newline)
+      # echo -n would also work, but wdiff has strange behaviour if the 2nd file is
+      # empty, it will not append newline, which make the output look strange
+      [[ $t1 || $t2 ]] && { wdiff <(echo "${t1%$NL}") <(echo "${t2%$NL}") | color_filter; }
+      t1=
+      t2=
+      [[ $diff = only ]] && echo "${i}" || echo "${i## }"
     fi
   done
   # thanks to Arne Babenhauserheide for pointing out this case is missing
   # if there was + or - lines at the end, which has not been printed yet
-  [[ -n $(<$t1) || -n $(<$t2) ]] && echo -e "$(wdiff "$t1" "$t2" | color_filter)"
+  [[ $t1 || $t2 ]] && { wdiff <(echo "${t1%$NL}") <(echo "${t2%$NL}") | color_filter; }
 elif [[ $filter = yes ]]; then
-  color_filter 
+  color_filter
 else
   wdiff "$1" "$2" | color_filter
-fi | if [[ -n $a2ps ]]; then
+fi | if [[ $a2ps ]]; then
   a2ps $a2ps_opts "--pretty-print=$style" -o "$out"
 else
   [[ $out = - ]] && cat || cat > "$out"
