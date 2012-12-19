@@ -25,6 +25,7 @@
 #version 0.2.0, 15.04.12 -- clean up + bugfix thanks to Arne
 #version 0.2.1, 15.04.12 -- clean up + new bug report address
 #version 0.2.2, 20.04.12 -- fixed a bug if argument were dirs
+#version 0.2.3, 18.12.12 -- replace usage of mktemp with bash built-ins
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
@@ -104,7 +105,7 @@ Examples:  ${0##*/} -d dir1 dir2
            ${0##*/} --ab -D dir1 dir2
 	   ${0##*/} -a --ab -D dir1 dir2 > file.ps
 	   wdiff file1 file2 | ${0##*/} -f
-	   diff file1 file2 | ${0##*/} -D -f
+	   diff -u file1 file2 | ${0##*/} -D -f
 
 
 Report bugs and comments at https://code.google.com/p/cj-overlay/issues/list
@@ -187,13 +188,11 @@ else
 fi
 
 if [[ $diff != no ]]; then
-  total_diff=$(mktemp)
-  #echo Debug: ${total_diff}
   if [[ $filter = no ]]; then
-    diff $diff_opts "$1" "$2" > $total_diff
+    exec 3< <(diff $diff_opts "$1" "$2")
     #don't die here, because diff of binary files give exit code = 2
   else
-    cat > $total_diff || die
+    exec 3<&0 || die
   fi
   # don't do this if we have not files ;-)
   if [[ $ab = yes && $1 && $2 ]]; then
@@ -207,8 +206,7 @@ if [[ $diff != no ]]; then
   else
     a=a; b=b
   fi
-  IFS="$NL"
-  for i in $(<$total_diff); do
+  while read -u 3 i; do
     if [[ $i = "Files "*" and "*" differ" ]]; then # binary case
       i="${i/$a/a}"
       i="${i/$b/b}"
