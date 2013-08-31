@@ -26,6 +26,7 @@
 #version 0.2.1, 15.04.12 -- clean up + new bug report address
 #version 0.2.2, 20.04.12 -- fixed a bug if argument were dirs
 #version 0.2.3, 18.12.12 -- replace usage of mktemp with bash built-ins
+#version 0.2.4, 31.08.13 -- fixed deleted leading spaces
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
@@ -206,7 +207,10 @@ if [[ $diff != no ]]; then
   else
     a=a; b=b
   fi
-  while read -u 3 i; do
+  while read -u 3; do
+    #small trick, because "read -u 3 i" would split the line and
+    #leading space would be lost.
+    i="${REPLY}"
     if [[ $i = "Files "*" and "*" differ" ]]; then # binary case
       i="${i/$a/a}"
       i="${i/$b/b}"
