@@ -27,6 +27,7 @@
 #version 0.2.2, 20.04.12 -- fixed a bug if argument were dirs
 #version 0.2.3, 18.12.12 -- replace usage of mktemp with bash built-ins
 #version 0.2.4, 31.08.13 -- fixed deleted leading spaces
+#version 0.2.5, 06.09.13 -- do not expand escape sequences in diff
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
@@ -207,7 +208,8 @@ if [[ $diff != no ]]; then
   else
     a=a; b=b
   fi
-  while read -u 3; do
+  # -r to not expand escape sequences in diff
+  while read -r -u 3; do
     #small trick, because "read -u 3 i" would split the line and
     #leading space would be lost.
     i="${REPLY}"
