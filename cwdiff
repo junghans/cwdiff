@@ -28,6 +28,7 @@
 #version 0.2.3, 18.12.12 -- replace usage of mktemp with bash built-ins
 #version 0.2.4, 31.08.13 -- fixed deleted leading spaces
 #version 0.2.5, 06.09.13 -- do not expand escape sequences in diff
+#version 0.2.6, 18.09.13 -- allow 1st argument begin a file with --filter
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
@@ -77,12 +78,12 @@ A colorized version of wdiff
 $usage
 
 OPTIONS:
--f, --filter        Act as a color filter only and don't excute diff/wdiff
+-f, --filter        Act as a wdiff color filter only and don't excute diff/wdiff
                     internally, just colorize input (no ARGS = read from stdin)
 -d, --diff          Preprocess input with diff and before giving it to wdiff
                     (very useful for dirs). Option can be used in combination
                     with --filter option meaning input is a patch.
--D, --diffonly      Process input with diff only and NOT with wdiff, so ${0##*/}
+-D, --diffonly      Process input with diff, but NOT with wdiff, so ${0##*/}
                     basically acts like a colorized version of diff. Option
                     can be used in combination with --filter option meaning
                     input is a patch.
@@ -180,13 +181,14 @@ done
 
 [[ $1 = - ]] && filter="yes" && shift
 if [[ $filter = no ]]; then
-  [[ ! $1 || ! $2 ]]  && die "Please specify two files or add --filter option"
+  [[ ! $1 || ! $2 ]]  && die "Please specify two files/dirs or add --filter option"
   #use -e as it could be file or dir
   [[ -e $1 ]] || die "Could not read file/dir '$1'"
   [[ -e $2 ]] || die "Could not read file/dir '$2'"
   [[ $3 ]] && die "I don't know what to do with arguments '${@:3}'"
 else
-  [[ $* ]] && die "I don't know what to do with arguments '$*' together --filter option"
+  [[ -n $1 && ! -f $1 ]] && die "Could not read file '$1'"
+  [[ $2 ]] && die "I don't know what to do with arguments '$*' together --filter option"
 fi
 
 if [[ $diff != no ]]; then
@@ -194,7 +196,7 @@ if [[ $diff != no ]]; then
     exec 3< <(diff $diff_opts "$1" "$2")
     #don't die here, because diff of binary files give exit code = 2
   else
-    exec 3<&0 || die
+    [[ $1 ]] && exec 3<$1 || exec 3<&0
   fi
   # don't do this if we have not files ;-)
   if [[ $ab = yes && $1 && $2 ]]; then
@@ -246,7 +248,7 @@ if [[ $diff != no ]]; then
   # if there was + or - lines at the end, which has not been printed yet
   [[ $t1 || $t2 ]] && { wdiff <(echo "${t1%$NL}") <(echo "${t2%$NL}") | color_filter; }
 elif [[ $filter = yes ]]; then
-  color_filter
+  color_filter $1
 else
   wdiff "$1" "$2" | color_filter
 fi | if [[ $a2ps ]]; then
