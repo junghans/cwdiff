@@ -29,6 +29,7 @@
 #version 0.2.4, 31.08.13 -- fixed deleted leading spaces
 #version 0.2.5, 06.09.13 -- do not expand escape sequences in diff
 #version 0.2.6, 18.09.13 -- allow 1st argument begin a file with --filter
+#version 0.2.7, 09.03.15 -- included a patch from NetBSD
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
