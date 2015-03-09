@@ -78,7 +78,7 @@ A colorized version of wdiff
 $usage
 
 OPTIONS:
--f, --filter        Act as a wdiff color filter only and don't excute diff/wdiff
+-f, --filter        Act as a wdiff color filter only and don't execute diff/wdiff
                     internally, just colorize input (no ARGS = read from stdin)
 -d, --diff          Preprocess input with diff and before giving it to wdiff
                     (very useful for dirs). Option can be used in combination
