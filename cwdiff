@@ -30,6 +30,7 @@
 #version 0.2.5, 06.09.13 -- do not expand escape sequences in diff
 #version 0.2.6, 18.09.13 -- allow 1st argument begin a file with --filter
 #version 0.2.7, 09.03.15 -- included a patch from NetBSD
+#version 0.2.8, 13.03.15 -- moved issue tracker to github 
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
@@ -102,7 +103,7 @@ OPTIONS:
     --              Stop parsing options
 -h, --help          Show this help
 -v, --version       Show version
-    --hg            Show last log message for hg (or cvs)
+    --git           Show last log message for hg (or cvs)
 
 Examples:  ${0##*/} -d dir1 dir2
            ${0##*/} file1 file2
@@ -112,7 +113,7 @@ Examples:  ${0##*/} -d dir1 dir2
 	   diff -u file1 file2 | ${0##*/} -D -f
 
 
-Report bugs and comments at https://code.google.com/p/cj-overlay/issues/list
+Report bugs and comments at https://github.com/junghans/cwdiff/issues
                          or junghans@votca.org
 eof
 }
@@ -166,7 +167,7 @@ while [[ ${1} = -?* ]]; do
    -h | --help)
     show_help
     exit 0;;
-   --hg)
+   --git)
     echo "${0##*/}: $(sed -ne 's/^#version.* -- \(.*$\)/\1/p' $0 | sed -n '$p')"
     exit 0;;
    -v | --version)
