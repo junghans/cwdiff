@@ -2,6 +2,10 @@
 
 ##usage with mercurial
 
+* add `hgrc.d/cwdiff.rc` to your `~/.hgrc` or `/etc/mercurial/hgrc.d/`
+
+or
+
 * Download cwdiff
 * Enable ExtdiffExtension (in `~/.hgrc`):
 ```
