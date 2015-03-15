@@ -1,5 +1,5 @@
-PREFIX=$(EPREFIX)/usr
-HGRCDIR=$(EPREFIX)/etc/mercurial/hgrc.d
+PREFIX=/usr
+HGRCDIR=/etc/mercurial/hgrc.d
 BINDIR=$(PREFIX)/bin
 MANDIR=$(PREFIX)/share/man
 
@@ -16,9 +16,9 @@ all: $(NAME) $(MAN)
 .PHONY: all clean install
 
 clean:
-	-rm $(MAN)
+	rm -f $(MAN)
 
 install: all
-	$(INSTALL) -m0644 -D $(NAME) $(DESTDIR)/$(BINDIR)/$(NAME)
-	$(INSTALL) -m0755 -D $(MAN) $(DESTDIR)/$(MANDIR)/man1/$(MAN)
-	[ -n '$(HGRCDIR)' ] && $(INSTALL) -m0644 -D $(HGRC) $(DESTDIR)/$(HGRCDIR)/$(HGRC)
+	$(INSTALL) -m0755 -D $(NAME) $(DESTDIR)/$(BINDIR)/$(NAME)
+	[ -z '$(MAN)' ] || $(INSTALL) -m0644 -D $(MAN) $(DESTDIR)/$(MANDIR)/man1/$(MAN)
+	[ -z '$(HGRCDIR)' ] || $(INSTALL) -m0644 -D $(HGRC) $(DESTDIR)/$(HGRCDIR)/$(HGRC)
