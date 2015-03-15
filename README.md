@@ -2,7 +2,7 @@
 
 ##usage with mercurial
 
-* add `hgrc.d/cwdiff.rc` to your `~/.hgrc` or `/etc/mercurial/hgrc.d/`
+* add `cwdiff.rc` to your `~/.hgrc` or `/etc/mercurial/hgrc.d/`
 
 or
 

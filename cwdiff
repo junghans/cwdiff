@@ -1,7 +1,6 @@
 #! /bin/bash
 
-#(C) 2009-2012 C. Junghans
-# junghans@votca.org
+# Copyright (C) 2009-2015 Christoph Junghans
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,6 +30,7 @@
 #version 0.2.6, 18.09.13 -- allow 1st argument begin a file with --filter
 #version 0.2.7, 09.03.15 -- included a patch from NetBSD
 #version 0.2.8, 13.03.15 -- moved issue tracker to github 
+#version 0.3.0, 15.03.15 -- print help2man compliant help and version
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
@@ -43,7 +43,6 @@ NL="
 "
 
 usage="Usage: ${0##*/} [OPTIONS] FILE1 FILE2"
-quiet="no"
 diff="no"
 filter="no"
 diff_opts='--new-file --unified --show-c-function --recursive'
@@ -70,51 +69,42 @@ die() {
   exit 1
 }
 
-qecho() {
-  [[ $quiet = yes ]] || echo "$*"
-}
-
 show_help () {
   cat << eof
-A colorized version of wdiff
-$usage
+A colorized version of (w)diff, which can be used a wrapper script, too.
+$asage
 
-OPTIONS:
--f, --filter        Act as a wdiff color filter only and don't execute diff/wdiff
-                    internally, just colorize input (no ARGS = read from stdin)
--d, --diff          Preprocess input with diff and before giving it to wdiff
-                    (very useful for dirs). Option can be used in combination
-                    with --filter option meaning input is a patch.
--D, --diffonly      Process input with diff, but NOT with wdiff, so ${0##*/}
-                    basically acts like a colorized version of diff. Option
-                    can be used in combination with --filter option meaning
-                    input is a patch.
-    --diffopts XXX  Change opts of diff
-                    Default: '$diff_opts'
-    --ab            replace trunc of dirname by 'a' and 'b'
-    --no-color      Disable color
-                    (implies --a2psopts '--prologue=ul')
--a, --a2ps          Pipe the output to a2ps, which will produce ps code
-                    (also work with --filter)
-    --a2psopts XXX  Change opts of a2ps
-                    Default: '$a2ps_opts'
--o, --out FILE      Change output file
-                    Default: stdout
-    --              Stop parsing options
--h, --help          Show this help
--v, --version       Show version
-    --git           Show last log message for hg (or cvs)
+Options:
+ -f, --filter         Act as a wdiff color filter only and don't execute diff/wdiff
+                      internally, just colorize input (no ARGS = read from stdin)
+ -d, --diff           Preprocess input with diff and before giving it to wdiff
+                      (very useful for dirs). Option can be used in combination
+                      with --filter option meaning input is a patch.
+ -D, --diffonly       Process input with diff, but NOT with wdiff, so ${0##*/}
+                      basically acts like a colorized version of diff. Option
+                      can be used in combination with --filter option meaning
+                      input is a patch.
+     --diffopts XXX   Change options given to diff. The default is '$diff_opts'.
+     --ab             replace common trunc of dirname by 'a' and 'b'
+     --no-color       Disable color
+                      (implies --a2psopts '--prologue=ul')
+ -a, --a2ps           Pipe the output to a2ps, which will produce ps code
+                      (also work with --filter)
+     --a2psopts XXX   Change opts of a2ps. The default is '$a2ps_opts'
+ -o, --out FILE       Change output file. The default is stdout
+     --               Stop parsing options
+ -h, --help           Show this help
+ -v, --version        Show version
 
-Examples:  ${0##*/} -d dir1 dir2
-           ${0##*/} file1 file2
-           ${0##*/} --ab -D dir1 dir2
-	   ${0##*/} -a --ab -D dir1 dir2 > file.ps
-	   wdiff file1 file2 | ${0##*/} -f
-	   diff -u file1 file2 | ${0##*/} -D -f
+Examples:
+ ${0##*/} -d dir1 dir2                     Compare two directories
+ ${0##*/} file1 file2                      Compare two files
+ ${0##*/} --ab -D dir1 dir2                VCS like output from compaing two directories
+ ${0##*/} -a --ab -D dir1 dir2 > file.ps   Create a ps file from compaing two directories
+ wdiff file1 file2 | ${0##*/} -f           Colorize the output of wdiff
+ diff -u file1 file2 | ${0##*/} -D -f      Colorize the output of diff
 
-
-Report bugs and comments at https://github.com/junghans/cwdiff/issues
-                         or junghans@votca.org
+Report bugs and comments at https://github.com/junghans/cwdiff/issues or junghans@votca.org
 eof
 }
 
@@ -161,17 +151,23 @@ while [[ ${1} = -?* ]]; do
    --diffopts)
     diff_opts="$2"
     shift ;;
-   -q | --quiet)
-    quiet="yes"
-    shift ;;
    -h | --help)
     show_help
     exit 0;;
-   --git)
+   --vcs)
     echo "${0##*/}: $(sed -ne 's/^#version.* -- \(.*$\)/\1/p' $0 | sed -n '$p')"
     exit 0;;
    -v | --version)
-    echo "${0##*/}, $(sed -ne 's/^#\(version.*\) -- .*$/\1/p' $0 | sed -n '$p') by C. Junghans"
+    cat << eov
+${0##*/} $(sed -ne 's/^#\(version.*\) -- .*$/\1/p' "$0" | sed -n '$p')
+
+$(sed -ne 's/^# \(Copyright.*\)/\1/p' "$0")
+This is free software: you are free to change and redistribute it.
+License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl2.html>
+There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Written by C. Junghans <junghans@votca.org>
+eov
     exit 0;;
    --)
     shift
