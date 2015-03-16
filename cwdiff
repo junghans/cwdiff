@@ -159,7 +159,7 @@ while [[ ${1} = -?* ]]; do
     exit 0;;
    -v | --version)
     cat << eov
-${0##*/} $(sed -ne 's/^#\(version.*\) -- .*$/\1/p' "$0" | sed -n '$p')
+${0##*/} $(sed -ne 's/^#version \(.*\) -- .*$/\1/p' "$0" | sed -n '$p')
 
 $(sed -ne 's/^# \(Copyright.*\)/\1/p' "$0")
 This is free software: you are free to change and redistribute it.
