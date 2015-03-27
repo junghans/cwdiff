@@ -1,5 +1,7 @@
 #A (w)diff wrapper to support directories and colorize the output
 
+##[Documentation](http://junghans.github.io/cwdiff/)
+
 ##usage with mercurial
 
 * add `cwdiff.rc` to your `~/.hgrc` or `/etc/mercurial/hgrc.d/`
