@@ -53,6 +53,7 @@ style="wdiff"
 a2ps=""
 a2ps_opts="--prologue=color"
 color="yes"
+wdiff_opts=""
 
 color_filter() {
   if [[ $a2ps ]]; then
@@ -237,7 +238,7 @@ if [[ $diff != no ]]; then
       # cut the last newline do avoid an empty line at the end (echo append newline)
       # echo -n would also work, but wdiff has strange behaviour if the 2nd file is
       # empty, it will not append newline, which make the output look strange
-      [[ $t1 || $t2 ]] && { wdiff <(echo "${t1%$NL}") <(echo "${t2%$NL}") | color_filter; }
+      [[ $t1 || $t2 ]] && { wdiff $wdiff_opts <(echo "${t1%$NL}") <(echo "${t2%$NL}") | color_filter; }
       t1=
       t2=
       [[ $diff = only ]] && echo "${i}" || echo "${i## }"
@@ -245,11 +246,11 @@ if [[ $diff != no ]]; then
   done
   # thanks to Arne Babenhauserheide for pointing out this case is missing
   # if there was + or - lines at the end, which has not been printed yet
-  [[ $t1 || $t2 ]] && { wdiff <(echo "${t1%$NL}") <(echo "${t2%$NL}") | color_filter; }
+  [[ $t1 || $t2 ]] && { wdiff $wdiff_opts <(echo "${t1%$NL}") <(echo "${t2%$NL}") | color_filter; }
 elif [[ $filter = yes ]]; then
   color_filter $1
 else
-  wdiff "$1" "$2" | color_filter
+  wdiff $wdiff_opts "$1" "$2" | color_filter
 fi | if [[ $a2ps ]]; then
   a2ps $a2ps_opts "--pretty-print=$style" -o "$out"
 else
