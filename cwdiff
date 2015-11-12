@@ -32,6 +32,7 @@
 #version 0.2.8, 13.03.15 -- moved issue tracker to github 
 #version 0.3.0, 15.03.15 -- print help2man compliant help and version
 #version 0.3.1, 30.06.15 -- fix --diffopts option (fixes #4) 
+#version 0.3.2, 12.11.15 -- make output processable by less -r/-R
 
 FAT_GREEN="[32;01m"
 GREEN="[32m"
@@ -178,6 +179,8 @@ eov
    die "Unknown option '$1'";;
   esac
 done
+
+[[ $a2ps ]] || [[ $color != yes ]] || wdiff_opts="-n"
 
 [[ $1 = - ]] && filter="yes" && shift
 if [[ $filter = no ]]; then
