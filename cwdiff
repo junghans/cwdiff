@@ -68,7 +68,7 @@ die() {
 show_help () {
   cat << eof
 A colorized version of (w)diff, which can be used a wrapper script, too.
-$asage
+$usage
 
 Options:
  -f, --filter         Act as a wdiff color filter only and don't execute diff/wdiff
@@ -81,7 +81,7 @@ Options:
                       can be used in combination with --filter option meaning
                       input is a patch.
      --diffopts XXX   Change options given to diff. The default is '$diff_opts'.
-     --ab             replace common trunc of dirname by 'a' and 'b'
+     --ab             Replace common trunc of dirname by 'a' and 'b'
      --no-color       Disable color
      --               Stop parsing options
  -h, --help           Show this help
