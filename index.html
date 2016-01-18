@@ -19,6 +19,7 @@
 <h1 align="center">CWDIFF</h1>
 
 <a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
 <a href="#DESCRIPTION">DESCRIPTION</a><br>
 <a href="#OPTIONS">OPTIONS</a><br>
 <a href="#EXAMPLES">EXAMPLES</a><br>
@@ -36,6 +37,14 @@
 
 <p style="margin-left:11%; margin-top: 1em">cwdiff &minus;
 manual page for cwdiff 0.4.0, 12.11.15</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>cwdiff</b>
+[<i>OPTIONS</i>] <i>FILE1 FILE2</i></p>
 
 <h2>DESCRIPTION
 <a name="DESCRIPTION"></a>
@@ -97,7 +106,7 @@ The default is &rsquo;&minus;&minus;new&minus;file
 <td width="70%">
 
 
-<p>replace common trunc of dirname by &rsquo;a&rsquo; and
+<p>Replace common trunc of dirname by &rsquo;a&rsquo; and
 &rsquo;b&rsquo;</p> </td>
 <td width="8%">
 </td></tr>
@@ -140,8 +149,8 @@ The default is &rsquo;&minus;&minus;new&minus;file
 </h2>
 
 
-<p style="margin-left:11%; margin-top: 1em">cwdiff &minus;d
-dir1 dir2</p>
+<p style="margin-left:11%; margin-top: 1em">cwdiff
+<b>&minus;d</b> dir1 dir2</p>
 
 <p style="margin-left:22%;">Compare two directories</p>
 
@@ -149,20 +158,20 @@ dir1 dir2</p>
 
 <p style="margin-left:22%;">Compare two files</p>
 
-<p style="margin-left:11%;">cwdiff &minus;&minus;ab
-&minus;D dir1 dir2</p>
+<p style="margin-left:11%;">cwdiff <b>&minus;&minus;ab
+&minus;D</b> dir1 dir2</p>
 
 <p style="margin-left:22%;">VCS like output from compaing
 two directories</p>
 
 <p style="margin-left:11%;">wdiff file1 file2 | cwdiff
-&minus;f</p>
+<b>&minus;f</b></p>
 
 <p style="margin-left:22%;">Colorize the output of
 wdiff</p>
 
-<p style="margin-left:11%;">diff &minus;u file1 file2 |
-cwdiff &minus;D &minus;f</p>
+<p style="margin-left:11%;">diff <b>&minus;u</b> file1
+file2 | cwdiff <b>&minus;D &minus;f</b></p>
 
 <p style="margin-left:22%;">Colorize the output of diff</p>
 
