@@ -16,11 +16,13 @@ after_success:
   - git config --global user.email "junghans@votca.org"
   - git fetch origin gh-pages && git checkout -b gh-pages FETCH_HEAD
   - make clean && make
-  - if ! git diff --quiet  && [[ "$TRAVIS_PULL_REQUEST" == "false" && "$TRAVIS_BRANCH" == "master" ]]; then
+  - if [[ ${encrypted_e6f2ead16db9_key} && ${encrypted_e6f2ead16db9_iv} && ${TRAVIS_PULL_REQUEST} == false && ${TRAVIS_BRANCH} == master ]]; then
       git commit -a -m "Manpage update";
       openssl aes-256-cbc -K $encrypted_e6f2ead16db9_key -iv $encrypted_e6f2ead16db9_iv -in deploy.enc -out ~/.ssh/id_rsa -d;
       chmod 600 ~/.ssh/id_rsa;
       git push git@github.com:${TRAVIS_REPO_SLUG} gh-pages:gh-pages;
+    else
+      git diff --no-color;
     fi
 
 compiler:
