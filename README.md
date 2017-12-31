@@ -1,8 +1,8 @@
-#A (w)diff wrapper to support directories and colorize the output
+# (w)diff wrapper to support directories and colorize the output
 
-##[Documentation](http://junghans.github.io/cwdiff/)
+## [Documentation](http://junghans.github.io/cwdiff/)
 
-##usage with mercurial
+## Usage with mercurial
 
 * add `cwdiff.rc` to your `~/.hgrc` or `/etc/mercurial/hgrc.d/`
 
@@ -36,7 +36,7 @@ Packages are available for:
 * [NetBSD](http://cvsweb.netbsd.org/bsdweb.cgi/pkgsrc/textproc/cwdiff/)
 * [Gentoo Linux](http://packages.gentoo.org/package/dev-util/cwdiff)
 
-##Issues
+## Issues
 
 Report bugs on the [github issues site](https://github.com/junghans/cwdiff/issues)
 
