@@ -55,7 +55,7 @@ ab=
 color_filter() {
   #use RED as an indicator if colors are on
   if [[ ${RED} ]]; then
-    sed -e "s/\[-/$RED/g" -e "s/-\]/$OFF/g" -e "s/{+/$GREEN/g" -e "s/+}/$OFF/g" $1
+    sed -E -e "s/\[-(.*?)-]/$RED\1$OFF/g" -e "s/\{\+(.*?)\+\}/$GREEN\1$OFF/g" $1
   else
     cat $1
   fi
